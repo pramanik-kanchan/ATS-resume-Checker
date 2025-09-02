@@ -3,8 +3,7 @@ import base64
 import streamlit as st
 import os
 import io
-from PIL import Image 
-import pdf2image
+import PyPDF2
 import google.generativeai as genai
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -18,25 +17,20 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # =========================
 def get_gemini_response(input, pdf_content, prompt):
     model = genai.GenerativeModel('gemini-1.5-flash')
-    response = model.generate_content([input, pdf_content[0], prompt])
+    # pdf_content is plain text now
+    response = model.generate_content([input, pdf_content, prompt])
     return response.text
 
 def input_pdf_setup(uploaded_file):
+    """Extract text from uploaded PDF using PyPDF2"""
     if uploaded_file is not None:
-        images = pdf2image.convert_from_bytes(uploaded_file.read())
-        first_page = images[0]
-
-        img_byte_arr = io.BytesIO()
-        first_page.save(img_byte_arr, format='JPEG')
-        img_byte_arr = img_byte_arr.getvalue()
-
-        pdf_parts = [
-            {
-                "mime_type": "image/jpeg",
-                "data": base64.b64encode(img_byte_arr).decode()
-            }
-        ]
-        return pdf_parts
+        pdf_reader = PyPDF2.PdfReader(uploaded_file)
+        text = ""
+        for page in pdf_reader.pages:
+            text += page.extract_text() or ""
+        if not text.strip():
+            text = "⚠️ Could not extract text from this PDF. It might be scanned or image-based."
+        return text
     else:
         raise FileNotFoundError("No file uploaded")
 
@@ -171,7 +165,6 @@ if submit1:
         st.subheader("📄 HR Review")
         st.markdown(format_response(response), unsafe_allow_html=True)
 
-        # Download PDF
         pdf_buffer = create_pdf("Resume Review Report", response)
         st.download_button("⬇️ Download Report as PDF", pdf_buffer, file_name="resume_review.pdf", mime="application/pdf")
 
@@ -186,7 +179,6 @@ elif submit2:
         st.subheader("🎯 Skill Improvement Suggestions")
         st.markdown(format_response(response), unsafe_allow_html=True)
 
-        # Download PDF
         pdf_buffer = create_pdf("Skill Improvement Report", response)
         st.download_button("⬇️ Download Report as PDF", pdf_buffer, file_name="skill_improvement.pdf", mime="application/pdf")
 
@@ -201,7 +193,6 @@ elif submit3:
         st.subheader("📊 Match Percentage & Analysis")
         st.markdown(format_response(response), unsafe_allow_html=True)
 
-        # Download PDF
         pdf_buffer = create_pdf("ATS Match Report", response)
         st.download_button("⬇️ Download Report as PDF", pdf_buffer, file_name="ats_match.pdf", mime="application/pdf")
 
