@@ -17,7 +17,6 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 # =========================
 def get_gemini_response(input, pdf_content, prompt):
     model = genai.GenerativeModel('gemini-1.5-flash')
-    # pdf_content is plain text now
     response = model.generate_content([input, pdf_content, prompt])
     return response.text
 
@@ -71,7 +70,7 @@ def create_pdf(report_title, content):
 # =========================
 st.set_page_config(page_title="ATS Resume Expert", layout="centered")
 
-# Inject CSS
+# Inject updated CSS
 st.markdown("""
     <style>
     .stApp {
@@ -81,12 +80,15 @@ st.markdown("""
         color: #003366 !important;
         text-align: center;
         font-family: 'Trebuchet MS', sans-serif;
+        text-shadow: 1px 1px 2px #aaa;
     }
     textarea {
         border: 2px solid #003366 !important;
         border-radius: 10px !important;
         padding: 10px !important;
         font-size: 15px !important;
+        background-color: #f8faff !important;
+        color: #003366 !important;
     }
     div.stButton > button {
         background-color: #003366;
@@ -97,29 +99,39 @@ st.markdown("""
         font-size: 16px;
         font-weight: bold;
         transition: 0.3s;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
     }
     div.stButton > button:hover {
         background-color: #0059b3;
         transform: scale(1.05);
     }
     .response-box {
-        background-color: white;
-        padding: 15px;
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 20px;
         border-radius: 12px;
         border-left: 6px solid #003366;
         font-size: 16px;
         line-height: 1.6;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        color: #003366;
+    }
+    .response-box strong {
+        background-color: #e6f2ff;
+        padding: 2px 6px;
+        border-radius: 4px;
     }
     </style>
 """, unsafe_allow_html=True)
 
 st.title("🤖 ATS Resume Expert")
-st.write("Upload your resume and job description to get a professional ATS-style analysis.")
 
-# Inputs
-input_text = st.text_area("📝 Job Description", placeholder="Paste the job description here...")
-uploaded_file = st.file_uploader("📂 Upload your resume (PDF only)", type=["pdf"])
+# Bold instruction texts
+st.markdown("**Upload your resume and job description to get a professional ATS-style analysis.**")
+st.markdown("**📝 Job Description**")
+input_text = st.text_area("", placeholder="Paste the job description here...")
+
+st.markdown("**📂 Upload your resume (PDF only)**")
+uploaded_file = st.file_uploader("", type=["pdf"])
 
 if uploaded_file is not None:
     st.success("✅ PDF Uploaded Successfully!")
